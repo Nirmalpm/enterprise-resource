@@ -17,15 +17,19 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.nirmal.pachakari.errors.ItemException;
 import com.nirmal.pachakari.integration.CamelIntegrator;
 import com.nirmal.pachakari.model.Item;
+import com.nirmal.pachakari.model.PurchaseItem;
 import com.nirmal.pachakari.service.ItemService;
 
 @RestController
@@ -34,6 +38,7 @@ public class ItemController {
 	
 	@Qualifier("item1")
 	ItemService itemService;
+	
 	@Value("${image.path}")
 	public String filePath;
 	
@@ -42,7 +47,7 @@ public class ItemController {
 	
 	@Autowired
 	CamelIntegrator camelIntegrator;
-	 
+		 
 	public ItemController(ItemService itemService) {
 		this.itemService = itemService;
 	}
@@ -52,11 +57,13 @@ public class ItemController {
 	public ResponseEntity<Item> addItem(Item item) throws ItemException{	
 		System.out.println(item);
 		try {
-			byte[] bytes = item.getFile().getBytes();
-			String imageName = item.getFile().getOriginalFilename();
-			Path path = Paths.get(filePath + imageName);
-			Files.write(path, bytes);
-			item.setImageName(imageName);
+			if(item.getFile() !=null ) {
+				byte[] bytes = item.getFile().getBytes();
+				String imageName = item.getFile().getOriginalFilename();
+				Path path = Paths.get(filePath + imageName);
+				Files.write(path, bytes);
+				item.setImageName(imageName);
+			}			
 			item = itemService.addItem(item);
 			item.setFile(null);
 		}catch(IOException ex){
@@ -84,15 +91,33 @@ public class ItemController {
 		
 	}
 	
-
-	/*private ItemService getItemService() {
-			return new ItemService() {
-				@Override
-				public boolean addItem(Item item) {
-					return itemDAO.addItem(item) > 0 ? true: false;
-				}				
-			};
-	}*/
+	@PreAuthorize("hasRole('VIEW_ALL')")
+	@PostMapping(value="/cart",consumes= MediaType.APPLICATION_JSON_VALUE,produces = MediaType.APPLICATION_JSON_VALUE)
+	public ResponseEntity<?> addToShoppingCart(@RequestBody PurchaseItem item) {
+		List<PurchaseItem> items = itemService.addToCart(item,item.getUser());
+		return new ResponseEntity<>(items,HttpStatus.OK);		
+	}
+	
+	@PreAuthorize("hasRole('VIEW_ALL')")
+	@DeleteMapping("/cart/{id}")
+	public ResponseEntity<List<PurchaseItem>> deleteFromShoppingCart(@PathVariable("id") Integer id, @RequestParam String user ) {
+		List<PurchaseItem> items = itemService.removeFromCart(id,user);
+		return new ResponseEntity<>(items,HttpStatus.OK);		
+	}
+	
+	@PreAuthorize("hasRole('VIEW_ALL')")
+	@DeleteMapping("/cart")
+	public ResponseEntity<HttpStatus> deleteShoppingCart( @RequestParam String user ) {
+		itemService.removeAllFromCart(user);
+		return new ResponseEntity<>(HttpStatus.OK);		
+	}
+	
+	@PreAuthorize("hasRole('VIEW_ALL')")
+	@GetMapping(value="/cartitems", produces = MediaType.APPLICATION_JSON_VALUE)
+	public ResponseEntity<List<PurchaseItem>> getCartItems( @RequestParam String user ) {
+		List<PurchaseItem> items = itemService.getAllCartItems(user);
+		return new ResponseEntity<>(items,HttpStatus.OK);		
+	}
 	
 	
 }

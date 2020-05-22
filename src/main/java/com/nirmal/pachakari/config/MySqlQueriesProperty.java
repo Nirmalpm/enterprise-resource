@@ -14,4 +14,5 @@ public class MySqlQueriesProperty {
 	private String insertOrder;
 	private String insertOrderItems;
 	private String selectItems;
+	private String updateItem;
 }

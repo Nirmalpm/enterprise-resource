@@ -1,5 +1,7 @@
 package com.nirmal.pachakari.controllers;
 
+import java.math.BigDecimal;
+
 import javax.servlet.http.HttpServletRequest;
 
 import org.springframework.http.HttpStatus;
@@ -30,10 +32,18 @@ public class OrderController {
 
 	@PostMapping(value="/order", produces=MediaType.APPLICATION_JSON_VALUE)
 	public ResponseEntity<?> addOrder (@RequestBody Order order, HttpServletRequest request){
-		String dateString = CalendarUtil.getDateString("yyyy-mm-dd-hh:mm a", order.getPurchaseDate());
+		String dateString = CalendarUtil.getDateString("yyyymmdd", order.getPurchaseDate());
 		String userName = order.getUserId()+"->";
 		String orderName = userName+dateString;
 		order.setOrderName(orderName);
+		BigDecimal totalAmount = order.getItems().stream()
+				.map((item)-> item.getItemPurchasedPrice().multiply(BigDecimal.valueOf(item.getQuantity())))
+				.reduce((total, price)-> total.add(price)).get();
+		int totalQuantity = order.getItems().stream()
+				.map((item)-> item.getQuantity())
+				.reduce((total, price)-> total+ price).get();
+		order.setTotalPrice(totalAmount);
+		order.setTotalQuantity(totalQuantity);
 		this.orderService.addOrder(order);
 		this.emailService.sendOrderMessage("nirmalpm@gmail.com", "Order Created", "Please find the order in your websote!",order);
 		return new ResponseEntity<>(HttpStatus.OK);

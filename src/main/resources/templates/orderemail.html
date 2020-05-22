@@ -5,8 +5,8 @@
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
   </head>
   <body>
-    <p th:text="#{greeting(${email})}">
-      Hello, Peter Static!
+    <p>
+      Hello,<span th:text="${email}"> Peter Static!</span>
     </p>
     <p th:if="${email.length() > 10}">
       Wow! You've got a long name (more than 10 chars)!
@@ -15,23 +15,30 @@
       You have been successfully placed the order</b> on <span th:text="${order.purchaseDate}">28-12-2012</span>
     </p>
     <p>Your Ordered items are:</p>
-    <ul th:each="item : ${order.items}">
-      	<li>
-      		<span  th:text="${item.itemId}">123</span>
-      		<span  th:text="${item.itemPurchasedPrice}">123</span>
-      		<span  th:text="${item.quantity}">10</span>
-      	</li>
-      </li>
-    </ul>
-    <p>
-      You can find <b>your inlined image</b> just below this text.
-    </p>
+    <table border="0">
+    	<tr>
+    		<th><span>Item Name</span></th>
+    		<th><span>Quantity</span></th>
+    		<th><span>Price</span></th>    		
+   		</tr>
+   		<tr th:each="item : ${order.items}">
+    		<th><span  th:text="${item.itemName}">123</span></th>    		
+    		<th><span  th:text="${item.quantity}">10</span></th>
+    		<th><span  th:text="${item.itemPurchasedPrice}">123</span></th>
+   		</tr>
+   		<tr>
+    		<th><span>&nbsp;</span></th>
+    		<th><span>Total:</span></th>
+    		<th>Rs.<span  th:text="${order.totalPrice}">10</span></th>
+   		</tr>
+    </table>
+    
     <p>
       <img src="sample.png" th:src="|cid:${imageResourceName}|" />
     </p>
     <p>
       Regards, <br />
-      <em>The Thymeleaf Team</em>
+      <em>Pachakari Team</em>
     </p>
   </body>
 </html>

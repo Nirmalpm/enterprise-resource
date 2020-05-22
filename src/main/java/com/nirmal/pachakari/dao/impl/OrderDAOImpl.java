@@ -35,8 +35,10 @@ public class OrderDAOImpl extends BaseDAOImpl implements OrderDAO<Order> {
 			public PreparedStatement createPreparedStatement(Connection con) throws SQLException {
 				PreparedStatement pst = con.prepareStatement(mySqlQueriesProperty.getInsertOrder(),Statement.RETURN_GENERATED_KEYS);
 				pst.setString(1, order.getOrderName());
-				pst.setInt(2, order.getUserId());
+				pst.setString(2, order.getUserId());
 				pst.setTimestamp(3, order.getPurchaseDate());
+				pst.setBigDecimal(4, order.getTotalPrice());
+				pst.setInt(5, order.getTotalQuantity());
 				return pst;
 			}
 		},keyHolder);
@@ -57,8 +59,9 @@ public class OrderDAOImpl extends BaseDAOImpl implements OrderDAO<Order> {
 					public void setValues(PreparedStatement ps, int i) throws SQLException {
 						ps.setInt(1, orderId);
 						ps.setInt(2, items.get(i).getItemId());
-						ps.setBigDecimal(3, items.get(i).getItemPurchasedPrice());
-						ps.setInt(4, items.get(i).getQuantity());						
+						ps.setString(3, items.get(i).getItemName());
+						ps.setBigDecimal(4, items.get(i).getItemPurchasedPrice());
+						ps.setInt(5, items.get(i).getQuantity());						
 					}
 
 					@Override

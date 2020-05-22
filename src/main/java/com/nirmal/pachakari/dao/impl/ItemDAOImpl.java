@@ -33,19 +33,32 @@ public class ItemDAOImpl extends BaseDAOImpl implements ItemDAO<Item> {
 		int iAdd = mysqlJdbcTemplate.update(new PreparedStatementCreator() {
 			@Override
 			public PreparedStatement createPreparedStatement(Connection con) throws SQLException {
-				PreparedStatement pst = con.prepareStatement(mySqlQueriesProperty.getInsertItem(),
-						Statement.RETURN_GENERATED_KEYS);
+				String sql = null;
+				if(item.getItemId() == null) {
+					sql = mySqlQueriesProperty.getInsertItem();
+				}else {
+					sql = mySqlQueriesProperty.getUpdateItem()+ "item_id="+item.getItemId();
+				}
+				PreparedStatement pst = con.prepareStatement(sql,Statement.RETURN_GENERATED_KEYS);
 				pst.setString(1, item.getItemName());
 				pst.setString(2, item.getItemDescription());
-				pst.setDouble(3, item.getItemPrice());
+				pst.setBigDecimal(3, item.getItemPrice());
 				pst.setInt(4, item.getItemQuantity());
 				pst.setString(5, item.getItemUnit());
 				pst.setString(6, item.getImageName());
 				pst.setTimestamp(7, item.getCreatedDate());
+				if(item.getItemId() > 0) {
+					pst.setString(8, item.getModifiedUser());
+				}else {
+					pst.setString(8, item.getCreatedUser());
+				}				
 				return pst;
 			}
 		}, keyHolder);
-		item.setItemId(keyHolder.getKey().intValue());
+		if(keyHolder != null && keyHolder.getKey() != null) {
+			item.setItemId(keyHolder.getKey().intValue());
+		}
+		
 		return item;
 	}
 
@@ -66,7 +79,7 @@ public class ItemDAOImpl extends BaseDAOImpl implements ItemDAO<Item> {
 					item.setItemId(rs.getInt("item_id"));
 					item.setItemName(rs.getString("item_name"));
 					item.setItemDescription(rs.getString("item_desc"));
-					item.setItemPrice(rs.getDouble("item_price"));
+					item.setItemPrice(rs.getBigDecimal("item_price"));
 					item.setItemQuantity(rs.getInt("item_quantity"));
 					item.setItemUnit(rs.getString("item_unit"));
 					item.setCreatedDate(rs.getTimestamp("created_date"));
